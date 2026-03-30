@@ -9,13 +9,23 @@ export const logoutUser = () => {
   localStorage.removeItem("token");
 };
 
-// --- TAMBAHAN BARU UNTUK REGISTRASI ---
-export const registerUser = async (nama, email, password) => {
-  // Sesuaikan payload JSON ini dengan apa yang diminta oleh Backend Spring Boot kamu
-  const response = await axiosInstance.post("/auth/register", {
+// Fungsi baru untuk mengambil daftar kota untuk Dropdown
+export const getAllKota = async () => {
+  const response = await axiosInstance.get("/kota");
+  return response.data;
+};
+
+// Fungsi register diperbarui untuk membawa data Kota
+export const registerUser = async (nama, email, password, idKota) => {
+  // Bentuk JSON ini sangat penting agar Spring Boot paham relasi kotanya
+  const payload = {
     nama: nama,
     email: email,
     password: password,
-  });
+    kota: {
+      idKota: parseInt(idKota), // Menyisipkan ID Kota sebagai objek relasi
+    },
+  };
+  const response = await axiosInstance.post("/auth/register", payload);
   return response.data;
 };

@@ -1,27 +1,49 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { registerUser } from "../../api/authService";
+import { registerUser, getAllKota } from "../../api/authService";
 
 const Register = () => {
   const [nama, setNama] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [idKota, setIdKota] = useState(""); // State baru untuk pilihan kota
+
+  const [kotaList, setKotaList] = useState([]); // Menyimpan daftar kota dari backend
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Mengambil daftar kota saat halaman pertama kali dibuka
+  useEffect(() => {
+    const fetchKota = async () => {
+      try {
+        const res = await getAllKota();
+        // Sesuaikan 'res.data' dengan format ApiResponse dari Spring Boot kamu
+        setKotaList(res.data || []);
+      } catch (err) {
+        console.error("Gagal memuat data kota:", err);
+      }
+    };
+    fetchKota();
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validasi: Pastikan kota sudah dipilih
+    if (!idKota) {
+      setError("Silakan pilih kota domisili Anda.");
+      return;
+    }
+
     setLoading(true);
     setError("");
     try {
-      await registerUser(nama, email, password);
+      await registerUser(nama, email, password, idKota);
       alert("Registrasi berhasil! Silakan login.");
-      navigate("/login"); // Lempar user ke halaman login setelah sukses daftar
+      navigate("/login");
     } catch (err) {
-      setError(
-        "Registrasi gagal. Email mungkin sudah terdaftar atau terjadi kesalahan server.",
-      );
+      setError("Registrasi gagal. Email mungkin sudah terdaftar.");
       console.error(err);
     } finally {
       setLoading(false);
@@ -63,7 +85,7 @@ const Register = () => {
                 required
                 value={nama}
                 onChange={(e) => setNama(e.target.value)}
-                className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               />
             </div>
             <div>
@@ -75,9 +97,32 @@ const Register = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               />
             </div>
+
+            {/* INI ADALAH DROPDOWN KOTA */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Kota Domisili
+              </label>
+              <select
+                required
+                value={idKota}
+                onChange={(e) => setIdKota(e.target.value)}
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-lg"
+              >
+                <option value="" disabled>
+                  -- Pilih Kota --
+                </option>
+                {kotaList.map((kota) => (
+                  <option key={kota.idKota} value={kota.idKota}>
+                    {kota.namaKota}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Password
@@ -87,7 +132,7 @@ const Register = () => {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               />
             </div>
 
